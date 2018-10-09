@@ -9,6 +9,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.security.AlgorithmParameters;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
@@ -49,10 +50,9 @@ class Data {
     }
 
     /**
-     * Saves the encrypted file, salt, and initialization vector
-     * to the same directory as the file that has been encrypted
+     * test
      *
-     * @throws Exception ...
+     * @throws Exception
      */
     void encrypt() throws Exception {
         /*
@@ -60,20 +60,11 @@ class Data {
          */
         FileInputStream in = new FileInputStream(file);
         /*
-         * Encrypted file output
-         */
-        FileOutputStream out = new FileOutputStream(file.getParent() +
-                "/" + file.getName() + ".aes");
-        /*
-         * Prepare for file encryption
-         * Save salt as "salt.aes"
+         * Generate salt
          */
         byte[] salt = new byte[8];
-        SecureRandom secureRandom = new SecureRandom();
-        secureRandom.nextBytes(salt);
-        FileOutputStream saltOutFile = new FileOutputStream(file.getParent() + "/salt.aes");
-        saltOutFile.write(salt);
-        saltOutFile.close();
+        SecureRandom srand = new SecureRandom();
+        srand.nextBytes(salt);
         /*
          * Generate key with user-specified password
          */
@@ -85,15 +76,18 @@ class Data {
         cipher.init(Cipher.ENCRYPT_MODE, secret);
         AlgorithmParameters params = cipher.getParameters();
         /*
-         * Save initialization vector as "iv.aes"
+         * Generate initialization vector
          */
-        FileOutputStream ivOutFile = new FileOutputStream(file.getParent() + "/iv.aes");
         byte[] iv = params.getParameterSpec(IvParameterSpec.class).getIV();
-        ivOutFile.write(iv);
-        ivOutFile.close();
         /*
-         * Encrypt the file
+         * Encrypted and output the file
+         *
+         * .fenc = fileEncrypt extension, means that the salt and
+         * initialization vector are embedded at the end of the
+         * encrypted file, respectively
          */
+        FileOutputStream out = new FileOutputStream(file.getParent() +
+                "/" + file.getName() + ".fenc");
         byte[] input = new byte[64];
         int bytesRead;
 
@@ -106,19 +100,82 @@ class Data {
         byte[] output = cipher.doFinal();
         if (output != null)
             out.write(output);
+        /*
+         * Embed salt and initialization vector at end of file
+         * Last 16 bytes = iv, the 8 bytes before that = salt
+         */
+        in.close();
+        out.flush();
+        out.write(salt);
+        out.write(iv);
+        out.close();
+        System.out.println("Encryption successful");
+    }
 
+    void decrypt() throws Exception {
+        /*
+         * Read salt
+         */
+        RandomAccessFile raf = new RandomAccessFile(file, "rw");
+
+        byte[] salt = new byte[8];
+        byte[] iv = new byte [16];
+
+        raf.seek(file.length() - (salt.length + iv.length));
+        raf.read(salt, 0, salt.length);
+
+        raf.seek(file.length() - iv.length);
+        raf.read(iv, 0, iv.length);
+
+        raf.setLength(file.length() - (salt.length + iv.length));
+        raf.close();
+
+        SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
+        KeySpec keySpec = new PBEKeySpec(password.toCharArray(), salt, 65536, 256);
+        SecretKey tmp = factory.generateSecret(keySpec);
+        SecretKey secret = new SecretKeySpec(tmp.getEncoded(), "AES");
+        /*
+         * Decrypt the file
+         */
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secret, new IvParameterSpec(iv));
+        FileInputStream in = new FileInputStream(file);
+        /*
+         * Save decrypted file in same directory as encrypted version
+         *
+         * Remove the .fenc extension
+         */
+        FileOutputStream out = new FileOutputStream(file.getParent() + "/" +
+                file.getName().substring(0, file.getName().length() - 5));
+        byte[] b = new byte[64];
+        int read;
+        while ((read = in.read(b)) != -1) {
+            byte[] output = cipher.update(b, 0, read);
+            if (output != null)
+                out.write(output);
+        }
+
+        byte[] output = cipher.doFinal();
+        if (output != null)
+            out.write(output);
         in.close();
         out.flush();
         out.close();
+        /*
+         * Delete encrypted file
+         */
+        if (file.delete()) {
+            System.out.println("File deleted");
+            System.out.println("Decryption successful");
+        }
     }
-
     /**
      * Uses the saved salt and initialization vector, as well as
      * the user-input password to attempt file decryption
      *
      * @throws Exception ...
      */
-    void decrypt() throws Exception {
+    void oldDecrypt() throws Exception {
         /*
          * Read salt
          */
@@ -149,6 +206,9 @@ class Data {
         FileInputStream fis = new FileInputStream(file);
         /*
          * Save decrypted file in same directory as encrypted version
+         *
+         * Remove ".aes" file extension. If the encrypted file was not renamed,
+         * it should now have the correct file extension and open easily
          */
         FileOutputStream fos = new FileOutputStream(file.getParent() + "/" +
                 file.getName().substring(0, file.getName().length() - 4));
@@ -166,5 +226,6 @@ class Data {
         fis.close();
         fos.flush();
         fos.close();
+        file.delete();
     }
 }

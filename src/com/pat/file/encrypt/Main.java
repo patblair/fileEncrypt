@@ -12,11 +12,15 @@ import javafx.stage.Stage;
 import java.io.File;
 
 public class Main extends Application {
-    private File file;
+    private File file = null;
     private String password;
 
     @Override
     public void start(Stage stage) throws Exception {
+
+        final String NOFILE = "Error: No file.";
+        final String NOPASS = "Error: No password.";
+        final String NODECRYPT = "Error: File is not a .fenc or .tenc file";
 
         FileChooser fc = new FileChooser();
         fc.setTitle("Choose a file");
@@ -27,10 +31,12 @@ public class Main extends Application {
 
         Label fileLabel = new Label("File:");
         Label passLabel = new Label("Password:");
+        Label errorLabel = new Label("Choose a file to encrypt/decrypt.");
 
         TextField passTextField = new TextField();
         TextField fileTextField = new TextField();
         fileTextField.setDisable(true);
+
 
         GridPane gridPane = new GridPane();
         /*
@@ -47,52 +53,81 @@ public class Main extends Application {
         gridPane.add(passTextField, 1, 1);
         /*
          * Row 2
+         * Error label
+         */
+        gridPane.add(errorLabel, 0, 2, 3, 1);
+        /*
+         * Row 3
          * Choosing to encrypt or decrypt
          */
-        gridPane.add(encryptButton, 0, 2);
-        gridPane.add(decryptButton, 1, 2);
+        gridPane.add(encryptButton, 0, 3);
+        gridPane.add(decryptButton, 1, 3);
+        /*
+         * Row 4-7
+         * soon
+         */
+
+
         /*
          * Open file chooser
          */
         browseButton.setOnAction(e -> {
             file = fc.showOpenDialog(stage);
-            fileTextField.setText(file.getName());
+            if (file == null) {
+                fileTextField.setText(null);
+            } else {
+                fileTextField.setText(file.getName());
+            }
         });
         /*
-         * Attempt to encrypt file
+         * Encrypts the file, as long as:
+         * - The file exists
+         * - A password was entered
          */
         encryptButton.setOnAction(e -> {
-            if (fileTextField.getText().equals("")) {
-                fileTextField.setText("Choose a file!");
-            } else if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
-                passTextField.setText("Enter a password!");
+            if (file == null || !file.exists()) {
+                errorLabel.setText(NOFILE);
+            } else if (passTextField.getText().equals("")) {
+                errorLabel.setText(NOPASS);
             } else {
                 Data data = new Data(file, passTextField.getText());
                 try {
                     data.encrypt();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                } catch (Exception el) {
+                    el.printStackTrace();
                 }
             }
         });
         /*
-         * Attempt to decrypt file
+         * Decrypts file, as long as:
+         * - The file exists
+         * - The file is of the correct filetype (.fenc or .tenc)
+         * - A password was entered
+         * - The password is correct (TODO)
+         *
          */
         decryptButton.setOnAction(e -> {
-            if (fileTextField.getText().equals("")) {
-                fileTextField.setText("Choose a file!");
-            } else if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
-                passTextField.setText("Enter a password!");
+            if (file == null || !file.exists()) {
+                errorLabel.setText(NOFILE);
+            } else if (fileTextField.getLength() < 5 ||
+                    !fileTextField.getText(fileTextField.getLength() - 5, fileTextField.getLength()).equals(".fenc") ||
+                    !fileTextField.getText(fileTextField.getLength() - 5, fileTextField.getLength()).equals(".tenc")) {
+                errorLabel.setText(NODECRYPT);
+            } else if (passTextField.getText().equals("")) {
+                errorLabel.setText(NOPASS);
             } else {
                 Data data = new Data(file, passTextField.getText());
                 try {
                     data.decrypt();
-                } catch (Exception e1) {
-                    e1.printStackTrace();
+                } catch (Exception el) {
+                    el.printStackTrace();
                 }
             }
         });
-        Scene scene = new Scene(gridPane, 270, 80);
+        /*
+         * Setup window
+         */
+        Scene scene = new Scene(gridPane, 270, 120);
         stage.setTitle("File Encrypt");
         stage.setScene(scene);
         stage.show();
