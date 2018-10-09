@@ -62,7 +62,9 @@ public class Main extends Application {
          * Attempt to encrypt file
          */
         encryptButton.setOnAction(e -> {
-            if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
+            if (fileTextField.getText().equals("")) {
+                fileTextField.setText("Choose a file!");
+            } else if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
                 passTextField.setText("Enter a password!");
             } else {
                 Data data = new Data(file, passTextField.getText());
@@ -77,7 +79,9 @@ public class Main extends Application {
          * Attempt to decrypt file
          */
         decryptButton.setOnAction(e -> {
-            if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
+            if (fileTextField.getText().equals("")) {
+                fileTextField.setText("Choose a file!");
+            } else if (passTextField.getText().equals("") || passTextField.getText().equals("Enter a password!")) {
                 passTextField.setText("Enter a password!");
             } else {
                 Data data = new Data(file, passTextField.getText());
