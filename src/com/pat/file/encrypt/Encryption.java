@@ -110,8 +110,6 @@ class Data {
         in.close();
         out.flush();
         out.close();
-
-        System.out.println("File successfully encrypted.");
     }
 
     /**
@@ -168,6 +166,5 @@ class Data {
         fis.close();
         fos.flush();
         fos.close();
-        System.out.println("File successfully decrypted.");
     }
 }
