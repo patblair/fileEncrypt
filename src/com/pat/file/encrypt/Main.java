@@ -4,7 +4,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
@@ -17,26 +16,38 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-
+        /*
+         * NOFILE and NOPASS are error messages which are used more
+         * than once
+         */
         final String NOFILE = "Error: No file.\n ";
         final String NOPASS = "Error: No password.\n ";
-        final String NODECRYPT = "Error: File is not a .fenc file\n ";
-
+        /*
+         * Setup file chooser
+         */
         FileChooser fc = new FileChooser();
         fc.setTitle("Choose a file");
-
+        /*
+         * Setup buttons
+         */
         Button browseButton = new Button("Browse...");
         Button encryptButton = new Button("Encrypt");
         Button decryptButton = new Button("Decrypt");
-
+        /*
+         * Setup labels
+         */
         Label fileLabel = new Label("File:");
         Label passLabel = new Label("Password:");
         Label infoLabel = new Label("Choose a file to encrypt/decrypt.\n ");
-
+        /*
+         * Setup text fields
+         */
         TextField passTextField = new TextField();
         TextField fileTextField = new TextField();
         fileTextField.setDisable(true);
-
+        /*
+         * Setup and add elements to gridPane
+         */
         GridPane fileEncMain = new GridPane();
         /*
          * Row 0: File selection
@@ -61,9 +72,8 @@ public class Main extends Application {
          */
         fileEncMain.add(encryptButton, 0, 3);
         fileEncMain.add(decryptButton, 1, 3);
-
         /*
-         * Open file chooser
+         * Open file chooser when broseButton is pressed
          */
         browseButton.setOnAction(e -> {
             file = fc.showOpenDialog(stage);
@@ -102,14 +112,14 @@ public class Main extends Application {
          * - The file exists
          * - The file is of the correct filetype (.fenc or .tenc)
          * - A password was entered
-         * - TODO: Detect if the password is incorrect instead of just failing
+         * - The password was correct
          */
         decryptButton.setOnAction(e -> {
             if (file == null || !file.exists()) {
                 infoLabel.setText(NOFILE);
             } else if (fileTextField.getLength() < 5 ||
                     !fileTextField.getText(fileTextField.getLength() - 5, fileTextField.getLength()).equals(".fenc")) {
-                infoLabel.setText(NODECRYPT);
+                infoLabel.setText("Error: File is not a .fenc file\n ");
             } else if (passTextField.getText().equals("")) {
                 infoLabel.setText(NOPASS);
             } else {
