@@ -128,6 +128,10 @@ class Data {
         /*
          * Read embedded salt and initialization vector
          */
+        if (!file.exists() || password == null || file == null) {
+            return false;
+        }
+
         RandomAccessFile raf = new RandomAccessFile(file, "rw");
         byte[] salt = new byte[8];
         byte[] iv = new byte[16];

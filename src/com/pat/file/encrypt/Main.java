@@ -10,6 +10,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public class Main extends Application {
     private File file = null;
@@ -90,15 +93,19 @@ public class Main extends Application {
          * - A password was entered
          */
         encryptButton.setOnAction(e -> {
+            Path p = Paths.get(file.getAbsolutePath() + ".fenc");
             if (file == null || !file.exists()) {
                 infoLabel.setText(NOFILE);
+            } else if (Files.exists(p)) {
+                    infoLabel.setText("Error: " + file.getName()+".fenc" +
+                            "\nalready exists.");
             } else if (passTextField.getText().equals("")) {
                 infoLabel.setText(NOPASS);
             } else {
                 Data data = new Data(file, passTextField.getText());
                 try {
-                    if(data.encrypt()) {
-                        infoLabel.setText("Encryption success, file saved to: \n"+file.getParent());
+                    if (data.encrypt()) {
+                        infoLabel.setText("Encryption success, file saved to: \n" + file.getParent());
                     } else {
                         infoLabel.setText("Encryption failure.\n ");
                     }
@@ -115,20 +122,26 @@ public class Main extends Application {
          * - The password was correct
          */
         decryptButton.setOnAction(e -> {
+            Path p = Paths.get(file.getParent() + "/" +
+                    file.getName().substring(0, file.getName().length() - 5));
             if (file == null || !file.exists()) {
                 infoLabel.setText(NOFILE);
             } else if (fileTextField.getLength() < 5 ||
-                    !fileTextField.getText(fileTextField.getLength() - 5, fileTextField.getLength()).equals(".fenc")) {
+                    !fileTextField.getText(fileTextField.getLength() - 5,
+                            fileTextField.getLength()).equals(".fenc")) {
                 infoLabel.setText("Error: File is not a .fenc file\n ");
+            } else if (Files.exists(p)) {
+                infoLabel.setText("Error: " + file.getName().substring(0, file.getName().length() - 5) +
+                        "\nalready exists.");
             } else if (passTextField.getText().equals("")) {
                 infoLabel.setText(NOPASS);
             } else {
                 Data data = new Data(file, passTextField.getText());
                 try {
-                    if(!data.decrypt()) {
+                    if (!data.decrypt()) {
                         infoLabel.setText("Decryption failure\n "); //not yet implemented
                     } else {
-                        infoLabel.setText("Decryption success, file saved to: \n"+file.getParent());
+                        infoLabel.setText("Decryption success, file saved to: \n" + file.getParent());
                     }
                 } catch (Exception el) {
                     el.printStackTrace();
@@ -143,6 +156,7 @@ public class Main extends Application {
         stage.setScene(scene);
         stage.show();
     }
+
     public static void main(String args[]) {
         launch(args);
     }
