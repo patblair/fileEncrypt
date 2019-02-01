@@ -151,7 +151,7 @@ public class Main extends Application {
         /*
          * Setup window
          */
-        Scene scene = new Scene(fileEncMain, 267, 110);
+        Scene scene = new Scene(fileEncMain, 400, 200);
         stage.setTitle("File Encrypt");
         stage.setScene(scene);
         stage.show();

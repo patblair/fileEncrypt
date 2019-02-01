@@ -173,7 +173,7 @@ class Data {
         } catch (Exception e) {
             /*
              * Decryption failed
-             * Re-embed salt/iv in encry[ted file
+             * Re-embed salt/iv
              * Return false
              */
             raf.seek(file.length());
